@@ -11,6 +11,7 @@ import java.util.logging.Level;
 
 import javax.xml.bind.JAXBElement;
 
+import org.jclouds.vcloud.director.v1_5.domain.network.Network;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +19,6 @@ import brooklyn.location.jclouds.JcloudsLocation;
 import brooklyn.util.exceptions.Exceptions;
 import brooklyn.util.guava.Maybe;
 import brooklyn.util.net.Protocol;
-import brooklyn.util.net.Urls;
 
 import com.google.api.client.repackaged.com.google.common.base.Objects;
 import com.google.common.annotations.Beta;
@@ -47,10 +47,6 @@ public class NatService {
 
 	private static final Logger LOG = LoggerFactory.getLogger(NatService.class);
 	
-	private static final String NAT_SERVICE_TYPE = "NatServiceType";
-
-	private static final String NETWORK_NAME = "d4p5-ext";
-
     private static final List<Version> VCLOUD_VERSIONS = ImmutableList.of(Version.V5_5, Version.V5_1, Version.V1_5);
 
 	public static Builder builder() {
@@ -115,15 +111,15 @@ public class NatService {
     public static class OpenPortForwardingConfig {
     	private Protocol protocol;
     	private HostAndPort target;
-    	private String networkId;
+    	private Network network;
     	private String publicIp;
     	private Integer publicPort;
     	
     	public OpenPortForwardingConfig protocol(Protocol val) {
     		this.protocol = val; return this;
     	}
-    	public OpenPortForwardingConfig networkId(String val) {
-    		this.networkId = val; return this;
+    	public OpenPortForwardingConfig network(Network val) {
+    		this.network = val; return this;
     	}
     	public OpenPortForwardingConfig target(HostAndPort val) {
     		this.target = val; return this;
@@ -137,13 +133,13 @@ public class NatService {
         public void checkValid() {
         	checkNotNull(protocol, "protocol");
         	checkNotNull(target, "target");
-        	checkNotNull(networkId, "networkId");
+        	checkNotNull(network, "network");
         	checkNotNull(publicIp, "publicIp");
             checkNotNull(publicPort, publicPort);
         }
     	@Override
     	public String toString() {
-    		return Objects.toStringHelper(this).add("protocol", protocol).add("target", target).add("networkId", networkId)
+    		return Objects.toStringHelper(this).add("protocol", protocol).add("target", target).add("network", network)
     				.add("publicIp", publicIp).add("publicPort", publicPort).toString();
     	}
     }
@@ -159,9 +155,7 @@ public class NatService {
         NatServiceType natService = tryFindService(gatewayFeatures.getNetworkService(), NatServiceType.class).get();
         
         // Modify the natService (which is the object retrieved directly from edgeGateway)
-        String networkUrl = Urls.mergePaths(baseUrl, "api/admin/network", args.networkId);
-
-        ReferenceType interfaceRef = generateReference(networkUrl, NETWORK_NAME, "application/vnd.vmware.admin.network+xml");
+        ReferenceType interfaceRef = generateInterfaceRef(args.network);
 
         GatewayNatRuleType gatewayNatRule = generateGatewayNatRule(
                 args.protocol, 
@@ -272,6 +266,14 @@ public class NatService {
         return referenceResult.getReferences();
     }
 
+    private static ReferenceType generateInterfaceRef(Network network) {
+        ReferenceType interfaceRef = new ReferenceType();
+        interfaceRef.setHref(network.getHref().toString());
+        interfaceRef.setName(network.getName());
+        interfaceRef.setType(network.getType());
+        return interfaceRef;
+    }
+
     // FIXME Don't set sysprop as could affect all other activities of the JVM!
     protected VcloudClient newVcloudClient(String endpoint, String identity, String credential, String trustStore, String trustStorePassword, Level logLevel) {
     	try {
@@ -314,14 +316,6 @@ public class NatService {
     	} catch (Exception e) {
     		throw Exceptions.propagate(e);
     	}
-    }
-    
-    private ReferenceType generateReference(String href, String name, String type) {
-        ReferenceType appliedOn = new ReferenceType();
-        appliedOn.setHref(href);
-        appliedOn.setName(name);
-        appliedOn.setType(type);
-        return appliedOn;
     }
 
     private GatewayNatRuleType generateGatewayNatRule(Protocol protocol, HostAndPort original,

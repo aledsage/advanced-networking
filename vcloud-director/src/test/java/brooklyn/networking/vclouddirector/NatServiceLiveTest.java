@@ -5,12 +5,16 @@ import static org.testng.Assert.assertNotNull;
 
 import java.util.List;
 
+import org.jclouds.compute.ComputeService;
+import org.jclouds.vcloud.director.v1_5.VCloudDirectorApi;
+import org.jclouds.vcloud.director.v1_5.domain.network.Network;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import brooklyn.entity.BrooklynAppLiveTestSupport;
 import brooklyn.location.jclouds.JcloudsLocation;
+import brooklyn.location.jclouds.JcloudsUtil;
 import brooklyn.networking.vclouddirector.NatService.OpenPortForwardingConfig;
 import brooklyn.util.net.Protocol;
 
@@ -63,9 +67,13 @@ public class NatServiceLiveTest extends BrooklynAppLiveTestSupport {
     
     @Test(groups="Live")
     public void testAddNatRule() throws Exception {
+        ComputeService computeService = JcloudsUtil.findComputeService(loc.getAllConfigBag());
+        VCloudDirectorApi api = computeService.getContext().unwrapApi(VCloudDirectorApi.class);
+        Network network = PortForwarderVcloudDirector.tryFindNetworkById(api, NETWORK_ID).get();
+                
         NatService service = NatService.builder().location(loc).build();
         HostAndPort result = service.openPortForwarding(new OpenPortForwardingConfig()
-                .networkId(NETWORK_ID)
+                .network(network)
                 .publicIp(PUBLIC_IP)
                 .protocol(Protocol.TCP)
                 .target(HostAndPort.fromParts(INTERNAL_MACHINE_IP, 1235))

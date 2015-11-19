@@ -22,18 +22,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Executors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Optional;
-import com.google.common.collect.Iterables;
-import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-
-import org.jclouds.compute.ComputeService;
-import org.jclouds.compute.domain.NodeMetadata;
-
 import org.apache.brooklyn.api.location.LocationSpec;
 import org.apache.brooklyn.api.location.NoMachinesAvailableException;
 import org.apache.brooklyn.config.ConfigKey;
@@ -51,6 +39,17 @@ import org.apache.brooklyn.util.exceptions.Exceptions;
 import org.apache.brooklyn.util.net.Networking;
 import org.apache.brooklyn.util.time.Duration;
 import org.apache.brooklyn.util.time.Time;
+import org.jclouds.compute.ComputeService;
+import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.domain.LoginCredentials;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Optional;
+import com.google.common.collect.Iterables;
+import com.google.common.net.HostAndPort;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 
 import brooklyn.networking.common.subnet.PortForwarder;
 import brooklyn.networking.util.ConcurrentReachableAddressFinder;
@@ -126,7 +125,7 @@ public class JcloudsPortforwardingSubnetLocation extends JcloudsLocation {
     // TODO Remove duplication from super's JcloudsLocation.createJcloudsSshMachineLocation
     // the todos/fixmes in this method are copied from there; they should be addressed in core brooklyn
     @Override
-    protected JcloudsSshMachineLocation createJcloudsSshMachineLocation(ComputeService computeService, NodeMetadata node, String vmHostname, Optional<HostAndPort> sshHostAndPort, ConfigBag setup) throws IOException {
+    protected JcloudsSshMachineLocation createJcloudsSshMachineLocation(ComputeService computeService, NodeMetadata node, String vmHostname, Optional<HostAndPort> sshHostAndPort, LoginCredentials credentials, ConfigBag setup) throws IOException {
         String user = getUser(setup);
         Map<?,?> sshConfig = extractSshConfig(setup, node);
         String nodeAvailabilityZone = extractAvailabilityZone(setup, node);

@@ -68,6 +68,7 @@ import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.OperatingSystem;
 import org.jclouds.compute.domain.OsFamily;
+import org.jclouds.domain.LoginCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -205,7 +206,7 @@ public class LegacyJcloudsCloudstackSubnetLocation extends JcloudsLocation {
     }
 
     @Override
-    protected JcloudsSshMachineLocation createJcloudsSshMachineLocation(ComputeService computeService, NodeMetadata node, String vmHostname1, Optional<HostAndPort> sshHostAndPort, ConfigBag setup) throws IOException {
+    protected JcloudsSshMachineLocation createJcloudsSshMachineLocation(ComputeService computeService, NodeMetadata node, String vmHostname1, Optional<HostAndPort> sshHostAndPort, LoginCredentials credentials, ConfigBag setup) throws IOException {
         String subnetSpecificHostname = null;
         String vmHostname = vmHostname1;
         String sshHost = vmHostname;
